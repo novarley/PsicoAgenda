@@ -156,6 +156,7 @@ npx supabase functions deploy notifications-dispatcher
   Hasta entonces, las reservas con anticipo se liberan solas a los 30 min.
 - Barrido de `wa_inbound_messages` con `processed_at is null` (reproceso si la función murió).
 - Respuesta "Aceptar" a la oferta de lista de espera desde el bot.
-- Edge Function `clinical-notes` que cifra/descifra con `CLINICAL_DATA_KEY` (la primitiva ya está en `_shared/crypto.ts`).
+- Rotación de `CLINICAL_DATA_KEY`: hoy todo es `key_version = 1`; falta el proceso de recifrado con una clave nueva.
 - Sincronización con Google Calendar / Outlook, firma de consentimientos, facturación electrónica.
-- Pantallas del panel: bandeja de WhatsApp (handoff), agenda, ficha clínica, métricas (`v_attendance_monthly`).
+- Panel: ya tiene agenda, pacientes, bandeja de WhatsApp, métricas, configuración y personal. Falta la venta de bonos.
+- Dividir el bundle del panel por pantallas (hoy ~535 kB sin comprimir, sobre todo `supabase-js`).
