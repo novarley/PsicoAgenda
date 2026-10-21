@@ -1,0 +1,21 @@
+# Secretos
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+
+# Supabase CLI local
+supabase/.branches
+supabase/.temp
+
+# Node / Vite
+node_modules/
+dist/
+.vercel/
+.wrangler/
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

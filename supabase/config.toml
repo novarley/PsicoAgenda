@@ -1,0 +1,31 @@
+# Configuración de Supabase CLI (desarrollo local con `supabase start` y despliegue).
+project_id = "psicoagenda"
+
+[api]
+# El esquema `app` (helpers de RLS, triggers) NO se expone por la API REST.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://*.vercel.app", "https://*.pages.dev"]
+# El personal clínico lo invita el admin; nadie se registra solo.
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+
+# Meta y pg_cron no envían un JWT de Supabase: estas funciones validan su propia firma/secreto.
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.notifications-dispatcher]
+verify_jwt = false
