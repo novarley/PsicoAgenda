@@ -79,7 +79,8 @@ function Shell() {
   }, [s.isStaff, s.orgId]);
 
   let page: ReactNode;
-  if (section === 'pacientes') page = route[1] ? <PatientDetail id={route[1]} /> : <Patients />;
+  // #/pacientes/<id>[/historia[/<cita>]]
+  if (section === 'pacientes') page = route[1] ? <PatientDetail key={route.join('/')} id={route[1]} initialTab={route[2]} appointmentId={route[3]} /> : <Patients />;
   else if (section === 'bandeja') page = <Inbox />;
   else if (section === 'metricas') page = <Metrics />;
   else if (section === 'configuracion') page = <Settings section={route[1]} />;

@@ -2,7 +2,7 @@
   "compilerOptions": { "strict": true },
   "tasks": {
     "test": "deno test --allow-env tests/",
-    "check": "deno check whatsapp-webhook/index.ts notifications-dispatcher/index.ts inbox-send/index.ts staff-invite/index.ts tests/"
+    "check": "deno check whatsapp-webhook/index.ts notifications-dispatcher/index.ts inbox-send/index.ts staff-invite/index.ts clinical-record/index.ts tests/"
   },
   "fmt": { "singleQuote": true, "lineWidth": 120 }
 }

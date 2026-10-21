@@ -36,3 +36,6 @@ verify_jwt = true
 
 [functions.staff-invite]
 verify_jwt = true
+
+[functions.clinical-record]
+verify_jwt = true

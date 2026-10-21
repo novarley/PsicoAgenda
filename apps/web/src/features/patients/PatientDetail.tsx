@@ -9,13 +9,14 @@ import { APPOINTMENT_STATUS, Badge, Button, Card, Empty, ErrorText, errorMessage
 import type { AgendaAppointment } from '../agenda/api';
 import { DOC_TYPES, DOCUMENT_KINDS, patientsApi, type Bono, type Insurer, type Patient, type PatientDocument } from './api';
 import { PatientFormModal } from './Patients';
+import ClinicalRecord from '../clinical/ClinicalRecord';
 
 type Tab = 'datos' | 'citas' | 'bonos' | 'documentos' | 'historia';
 
-export default function PatientDetail({ id }: { id: string }) {
+export default function PatientDetail({ id, initialTab, appointmentId }: { id: string; initialTab?: string; appointmentId?: string }) {
   const s = useSession();
   const [p, setP] = useState<Patient | null | undefined>(undefined);
-  const [tab, setTab] = useState<Tab>('datos');
+  const [tab, setTab] = useState<Tab>(initialTab === 'historia' && s.isProfessional ? 'historia' : 'datos');
   const [editing, setEditing] = useState(false);
   const [appts, setAppts] = useState<AgendaAppointment[]>([]);
   const [bonos, setBonos] = useState<Bono[]>([]);
@@ -127,14 +128,7 @@ export default function PatientDetail({ id }: { id: string }) {
 
       {tab === 'documentos' && <Documents patientId={p.id} docs={docs} onChanged={load} />}
 
-      {tab === 'historia' && (
-        <Card>
-          <p className="text-sm text-slate-600">
-            La historia clínica (anamnesis, diagnósticos y notas de evolución cifradas, visibles solo para el profesional tratante)
-            se construye en la siguiente funcionalidad. Las tablas y el cifrado ya existen en la base de datos.
-          </p>
-        </Card>
-      )}
+      {tab === 'historia' && <ClinicalRecord patientId={p.id} appointments={appts} appointmentId={appointmentId} />}
 
       {editing && (
         <PatientFormModal title="Editar paciente" initial={p} onClose={() => setEditing(false)}

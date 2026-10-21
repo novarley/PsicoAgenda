@@ -165,6 +165,9 @@ function AppointmentModal({ appt, onClose, onChanged }: { appt: AgendaAppointmen
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button onClick={() => go(`/pacientes/${appt.patient_id}`)}>Ver ficha</Button>
+        {appt.professional_id === s.professionalId && ['confirmed', 'completed', 'scheduled'].includes(appt.status) && (
+          <Button onClick={() => go(`/pacientes/${appt.patient_id}/historia/${appt.id}`)}>Nota de la sesión</Button>
+        )}
         {can('confirmed') && <Button variant="primary" disabled={busy} onClick={() => run(() => agendaApi.setStatus(appt.id, 'confirmed'))}>Confirmar</Button>}
         {can('completed') && <Button variant="primary" disabled={busy} onClick={() => run(() => agendaApi.setStatus(appt.id, 'completed'))}>Atendida</Button>}
         {can('no_show') && <Button disabled={busy} onClick={() => run(() => agendaApi.setStatus(appt.id, 'no_show'))}>No asistió</Button>}
