@@ -158,4 +158,4 @@ npx supabase functions deploy notifications-dispatcher
 - Respuesta "Aceptar" a la oferta de lista de espera desde el bot.
 - Edge Function `clinical-notes` que cifra/descifra con `CLINICAL_DATA_KEY` (la primitiva ya está en `_shared/crypto.ts`).
 - Sincronización con Google Calendar / Outlook, firma de consentimientos, facturación electrónica.
-- Pantallas del panel: bandeja de WhatsApp (handoff), agenda, ficha clínica, métricas (`v_attendance_monthly`).
+- Pantallas del panel: agenda, ficha clínica, métricas (`v_attendance_monthly`). La bandeja de WhatsApp ya está.

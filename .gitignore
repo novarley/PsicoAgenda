@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Modo demo del panel: solo VITE_DEMO=true, sin secretos
+!apps/web/.env.demo
 supabase/functions/.env
 
 # Supabase CLI local

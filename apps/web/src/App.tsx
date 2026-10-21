@@ -1,26 +1,79 @@
-// Esqueleto del panel: acceso por enlace mágico (solo personal invitado),
-// alertas de crisis en tiempo real y agenda del día. Lo que cada rol ve lo decide RLS.
-import { useEffect, useState, type FormEvent } from 'react';
+// Panel: acceso por enlace mágico (solo personal invitado), agenda del día y bandeja
+// de WhatsApp. Lo que cada rol ve lo decide RLS en la base de datos.
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from './lib/supabase';
+import { isDemo, supabase } from './lib/supabase';
+import Inbox from './features/inbox/Inbox';
+import { inboxApi } from './features/inbox/api';
 
-interface CrisisEvent { id: string; severity: 'high' | 'medium'; created_at: string }
 interface Appointment { id: string; starts_at: string; status: string; patients: { full_name: string } | null }
+type Tab = 'today' | 'inbox';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    if (isDemo) return;
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
 
+  if (!isDemo && !session) {
+    return (
+      <main className="mx-auto max-w-4xl p-4 font-sans text-slate-800">
+        <h1 className="mb-6 text-2xl font-semibold">PsicoAgenda</h1>
+        <Login />
+      </main>
+    );
+  }
+  return <Shell />;
+}
+
+function Shell() {
+  const [tab, setTab] = useState<Tab>('inbox');
+  const [attention, setAttention] = useState(0);
+
+  // Contador de conversaciones que esperan a una persona (crisis o derivadas)
+  useEffect(() => {
+    const refresh = () => inboxApi.list()
+      .then((items) => setAttention(items.filter((c) => c.open_crisis || c.human_handoff).length))
+      .catch(() => setAttention(0));
+    refresh();
+    return inboxApi.subscribe(refresh);
+  }, []);
+
   return (
-    <main className="mx-auto max-w-4xl p-4 font-sans text-slate-800">
-      <h1 className="mb-6 text-2xl font-semibold">PsicoAgenda</h1>
-      {session ? <Dashboard /> : <Login />}
-    </main>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+          <span className="text-lg font-semibold text-teal-800">PsicoAgenda</span>
+          <nav className="flex gap-1 text-sm">
+            <TabButton active={tab === 'today'} onClick={() => setTab('today')}>Hoy</TabButton>
+            <TabButton active={tab === 'inbox'} onClick={() => setTab('inbox')}>
+              Bandeja WhatsApp
+              {attention > 0 && <span className="ml-1.5 rounded-full bg-red-600 px-1.5 text-xs text-white">{attention}</span>}
+            </TabButton>
+          </nav>
+          <span className="ml-auto flex items-center gap-3 text-sm">
+            {isDemo && <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Modo demo · datos ficticios</span>}
+            {!isDemo && <button className="underline" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>}
+          </span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl p-4">
+        {tab === 'inbox' ? <Inbox /> : <Today />}
+      </main>
+    </div>
+  );
+}
+
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button onClick={onClick}
+      className={`flex items-center rounded px-3 py-1.5 ${active ? 'bg-teal-700 text-white' : 'hover:bg-slate-100'}`}>
+      {children}
+    </button>
   );
 }
 
@@ -51,52 +104,31 @@ function Login() {
   );
 }
 
-function Dashboard() {
-  const [crises, setCrises] = useState<CrisisEvent[]>([]);
+function Today() {
   const [today, setToday] = useState<Appointment[]>([]);
 
   useEffect(() => {
-    supabase.from('crisis_events').select('id, severity, created_at')
-      .is('acknowledged_at', null).order('created_at', { ascending: false })
-      .then(({ data }) => setCrises(data ?? []));
-
-    // Las alertas de crisis llegan al instante (Supabase Realtime, incluido en el plan gratis)
-    const channel = supabase.channel('crisis')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'crisis_events' },
-        (payload) => setCrises((c) => [payload.new as CrisisEvent, ...c]))
-      .subscribe();
-
+    if (isDemo) return;
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
     supabase.from('appointments').select('id, starts_at, status, patients(full_name)')
       .gte('starts_at', start.toISOString()).lt('starts_at', end.toISOString()).order('starts_at')
       .then(({ data }) => setToday((data ?? []) as unknown as Appointment[]));
-
-    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (
-    <div className="flex flex-col gap-6">
-      {crises.length > 0 && (
-        <section role="alert" className="rounded border-2 border-red-600 bg-red-50 p-4">
-          <h2 className="font-semibold text-red-800">⚠️ {crises.length} alerta(s) de crisis sin atender</h2>
-          <p className="text-sm">Abre la bandeja de WhatsApp y contacta al paciente ahora.</p>
-        </section>
+    <section>
+      <h2 className="mb-2 text-lg font-semibold">Agenda de hoy</h2>
+      {today.length === 0 ? <p className="text-slate-500">{isDemo ? 'La agenda aún no tiene modo demo.' : 'Sin citas hoy.'}</p> : (
+        <ul className="divide-y rounded border bg-white">
+          {today.map((a) => (
+            <li key={a.id} className="flex justify-between p-3">
+              <span>{new Date(a.starts_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} · {a.patients?.full_name}</span>
+              <span className="text-sm text-slate-500">{a.status}</span>
+            </li>
+          ))}
+        </ul>
       )}
-      <section>
-        <h2 className="mb-2 text-lg font-semibold">Agenda de hoy</h2>
-        {today.length === 0 ? <p className="text-slate-500">Sin citas hoy.</p> : (
-          <ul className="divide-y rounded border">
-            {today.map((a) => (
-              <li key={a.id} className="flex justify-between p-3">
-                <span>{new Date(a.starts_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} · {a.patients?.full_name}</span>
-                <span className="text-sm text-slate-500">{a.status}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <button className="self-start text-sm underline" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
-    </div>
+    </section>
   );
 }
