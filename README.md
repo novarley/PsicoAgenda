@@ -19,10 +19,12 @@ supabase/
                                        recordatorios, lista de espera, métricas
     …0004_supabase_cron_storage.sql    pg_cron cada 5 min, bucket privado de documentos
     …0005_inbox.sql                    vistas de la bandeja de WhatsApp, autor de cada respuesta, Realtime
+    …0006_panel.sql                    personal, último admin protegido, ocupación, ingresos, pagos manuales
   functions/
     whatsapp-webhook/                  endpoint del webhook de Meta (GET verificación, POST mensajes)
     notifications-dispatcher/          recordatorios 48 h / 2 h, aftercare, lista de espera
     inbox-send/                        respuesta manual del equipo desde la bandeja (ventana de 24 h)
+    staff-invite/                      invitar personal por correo y asignar rol (Auth Admin API)
     _shared/
       bot/engine.ts                    máquina de estados del flujo de 10 pasos (pura, testeable)
       bot/crisis.ts                    protocolo de crisis por reglas
@@ -31,10 +33,16 @@ supabase/
       whatsapp/schema.ts               validación estricta de botones/listas/plantillas
       payments/wompi.ts                enlace de pago firmado
       crypto.ts                        firma de Meta, AES-256-GCM para notas clínicas
-    tests/                             pruebas Deno (32)
-  tests/plain-postgres/                pruebas SQL de agenda, bonos y RLS
+    tests/                             pruebas Deno (37)
+  tests/plain-postgres/                pruebas SQL de agenda, bonos, bandeja, panel y RLS por rol
   seed.sql                             datos demo (solo local)
-apps/web/                              panel React + Tailwind (SPA estática): agenda del día y bandeja de WhatsApp
+apps/web/                              panel React + Tailwind (SPA estática)
+  src/features/agenda/                 agenda por profesional, huecos libres, nueva cita, estados, pago manual
+  src/features/patients/               lista, alta, ficha (datos, citas, bonos, documentos)
+  src/features/inbox/                  bandeja de WhatsApp (crisis y derivaciones)
+  src/features/metrics/                ocupación, asistencia vs ausentismo, ingresos
+  src/features/settings/               organización, sedes, servicios, EPS, profesionales, horarios, personal
+  src/demo/store.ts                    datos ficticios para el modo demo
 docs/                                  arquitectura y despliegue
 ```
 
@@ -64,4 +72,4 @@ npm install
 npm run demo
 ```
 
-Con `VITE_DEMO=true` (archivo `apps/web/.env.demo`) el panel usa datos ficticios en memoria: bandeja con una crisis abierta, una derivación y conversaciones atendidas por el bot. No guarda nada ni envía mensajes.
+Con `VITE_DEMO=true` (archivo `apps/web/.env.demo`) el panel usa datos ficticios en memoria: unos 4 meses de citas, pacientes, bonos, pagos y la bandeja con una crisis abierta. El selector «Demo · ver como» de la cabecera muestra la app como administración, recepción o profesional. No guarda nada ni envía mensajes; al recargar se reinicia.

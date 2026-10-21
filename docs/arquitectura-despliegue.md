@@ -158,4 +158,5 @@ npx supabase functions deploy notifications-dispatcher
 - Respuesta "Aceptar" a la oferta de lista de espera desde el bot.
 - Edge Function `clinical-notes` que cifra/descifra con `CLINICAL_DATA_KEY` (la primitiva ya está en `_shared/crypto.ts`).
 - Sincronización con Google Calendar / Outlook, firma de consentimientos, facturación electrónica.
-- Pantallas del panel: agenda, ficha clínica, métricas (`v_attendance_monthly`). La bandeja de WhatsApp ya está.
+- Panel: ya tiene agenda, pacientes, bandeja de WhatsApp, métricas, configuración y personal. Falta la historia clínica (notas cifradas) y la venta de bonos.
+- Dividir el bundle del panel por pantallas (hoy ~535 kB sin comprimir, sobre todo `supabase-js`).

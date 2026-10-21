@@ -33,3 +33,6 @@ verify_jwt = false
 # El panel llama con la sesión del usuario: Supabase valida el JWT antes de entrar.
 [functions.inbox-send]
 verify_jwt = true
+
+[functions.staff-invite]
+verify_jwt = true
