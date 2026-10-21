@@ -162,17 +162,30 @@ function assertUnique(values: string[], label: string, ctx: z.RefinementCtx) {
 }
 
 // ------------------------------------------------------------------- builders
-/** Recorta texto dinámico al límite con "…" en vez de dejar que Meta lo rechace. */
+/** Recorta texto de UNA línea (títulos, parámetros) al límite con "…" en vez de dejar que Meta lo rechace. */
 export function fitText(value: string, max: number): string {
-  const clean = value.replace(/\s+/g, ' ').trim();
-  if (clean.length <= max) return clean;
-  return `${clean.slice(0, max - 1).trimEnd()}…`;
+  return truncate(value.replace(/\s+/g, ' ').trim(), max);
+}
+
+/** Como fitText, pero para cuerpos de mensaje: conserva los saltos de línea (listas, párrafos). */
+export function fitBody(value: string, max: number): string {
+  const clean = value
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return truncate(clean, max);
+}
+
+function truncate(value: string, max: number): string {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 1).trimEnd()}…`;
 }
 
 export interface Choice { id: string; title: string; description?: string }
 
 export function textMessage(body: string): OutboundContent {
-  return { type: 'text', text: { body: fitText(body, LIMITS.textBody) } };
+  return { type: 'text', text: { body: fitBody(body, LIMITS.textBody) } };
 }
 
 export function buttonsMessage(body: string, choices: Choice[], footer?: string): OutboundContent {
@@ -180,7 +193,7 @@ export function buttonsMessage(body: string, choices: Choice[], footer?: string)
     type: 'interactive',
     interactive: {
       type: 'button',
-      body: { text: fitText(body, LIMITS.interactiveBody) },
+      body: { text: fitBody(body, LIMITS.interactiveBody) },
       ...(footer ? { footer: { text: fitText(footer, LIMITS.footerText) } } : {}),
       action: {
         buttons: choices.map((c) => ({ type: 'reply' as const, reply: { id: c.id, title: fitText(c.title, LIMITS.buttonTitle) } })),
@@ -194,7 +207,7 @@ export function listMessage(body: string, button: string, choices: Choice[], foo
     type: 'interactive',
     interactive: {
       type: 'list',
-      body: { text: fitText(body, LIMITS.interactiveBody) },
+      body: { text: fitBody(body, LIMITS.interactiveBody) },
       ...(footer ? { footer: { text: fitText(footer, LIMITS.footerText) } } : {}),
       action: {
         button: fitText(button, LIMITS.listButton),

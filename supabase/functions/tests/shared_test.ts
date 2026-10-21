@@ -55,6 +55,17 @@ Deno.test('schema: los builders recortan títulos largos y el resultado es váli
   assertEquals(out.to, '573001112233');
 });
 
+Deno.test('schema: los cuerpos conservan saltos de línea; los títulos se compactan', () => {
+  const msg = buttonsMessage('Revisa tu cita:\n• Profesional: X\n\n\n\n¿La confirmo?  ', [{ id: 'c|1', title: 'Confirmar\n ya' }]);
+  const out = buildOutbound('573001112233', msg);
+  assert(out.type === 'interactive' && out.interactive.type === 'button');
+  assertEquals(out.interactive.body.text, 'Revisa tu cita:\n• Profesional: X\n\n¿La confirmo?');
+  assertEquals(out.interactive.action.buttons[0].reply.title, 'Confirmar ya');
+  const text = buildOutbound('573001112233', textMessage('Línea 1\nLínea 2'));
+  assert(text.type === 'text');
+  assertEquals(text.text.body, 'Línea 1\nLínea 2');
+});
+
 Deno.test('schema: rechaza más de 3 botones, ids repetidos y claves sobrantes', () => {
   const four = buttonsMessage('¿?', [1, 2, 3, 4].map((n) => ({ id: `b|${n}`, title: `Op ${n}` })));
   assertThrows(() => buildOutbound('573001112233', four), InvalidWhatsAppMessageError);
